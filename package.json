@@ -1,0 +1,47 @@
+{
+  "name": "roadwatch-next",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:integration": "playwright test tests/e2e/api.spec.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.9.1",
+    "leaflet": "1.9.4",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.89.0",
+    "server-only": "0.0.1",
+    "swr": "2.5.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/leaflet": "1.9.22",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.8",
+    "jsdom": "30.1.2",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  },
+  "type": "module"
+}
