@@ -101,11 +101,11 @@ export function DevicesHealth() {
         >
           {!state.admin ? (
             <>
-              <Notice label="GHA access">
+              <Notice label="RHA access">
                 Sign in to view device IDs and their last recorded detections.
               </Notice>
-              <button className={c('btn quiet spaced')} onClick={state.openLogin}>
-                Sign in as GHA
+              <button className={c('btn quiet spaced')} onClick={() => state.openLogin()}>
+                Sign in as RHA
               </button>
             </>
           ) : records.error ? (

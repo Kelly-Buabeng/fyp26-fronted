@@ -19,13 +19,34 @@ template claims.
 | `detectImage(input, options)`       | `POST /api/v1/detect`            | Multipart `image`, `lat`, `lng`, optional `device_id=manual`          | `DetectionResponse`; backend API key                                 |
 | `exportDetections(format, options)` | `GET /api/v1/detections/export`  | `format=csv\|geojson`, `limit=5000` (max 20000), `min_confidence=0.0` | Download blob; backend API key                                       |
 | `deleteDetection(id)`               | `DELETE /api/v1/detections/{id}` | Record ID                                                             | `{deleted: id}` or 404; backend API key                              |
-| `getSavedDetections(options)`       | Adapter over GeoJSON export      | Same export filters                                                   | Validated table records; frontend GHA session                        |
+| `getSavedDetections(options)`       | Adapter over GeoJSON export      | Same export filters                                                   | Validated table records; frontend RHA session                        |
 
 Browser requests use `/api/backend/*`; an explicit server allowlist maps these
 to backend paths. Arbitrary backend proxying is not available. Detection is
 public through the frontend for citizen submissions, with origin checks and
-upload rate limits. Exports and deletion require the signed GHA session in
-addition to the server-forwarded backend API key.
+upload rate limits. Frontend service information, statistics, regional reports, exports, and
+deletion require the signed authority session. Exports and deletion also use
+the server-forwarded backend API key. The access column above describes the
+upstream FastAPI contract, which has no user identity system.
+
+`getStorageMode()` calls public `GET /api/backend/mode`, validates the backend
+statistics internally, and returns only `{mock_mode: boolean}`. Full statistics
+are never returned by this public route.
+
+## Frontend authentication
+
+| Route              | Contract                                                                                                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/auth`   | JSON `{email,password}`; matching server configuration creates an eight-hour signed HttpOnly cookie. Same-origin request required. Wrong credentials return a generic 401. |
+| `GET /api/auth`    | `{admin,enabled}`; session status without secret data                                                                                                                      |
+| `DELETE /api/auth` | Same-origin sign-out; expires the session cookie                                                                                                                           |
+
+Authority page requests redirect to `/login?next=<local-authority-path>` when
+signed out. The login page restricts return destinations to authority pages,
+preventing redirects to external sites. Authorization is also checked inside
+each protected server page and API handler. Browser role controls cannot grant
+permissions. Login is limited to eight attempts per fifteen minutes per trusted forwarded IP,
+or per process when forwarded headers are not trusted.
 
 ## Detection request
 
@@ -79,7 +100,7 @@ backend model prediction threshold defaults to 0.35.
 | Error | Meaning                                                                |
 | ----- | ---------------------------------------------------------------------- |
 | 400   | Coordinates outside Ghana, invalid file, or malformed frontend filters |
-| 401   | Missing/invalid backend key, or missing frontend GHA session           |
+| 401   | Missing/invalid backend key, or missing frontend RHA session           |
 | 403   | Mutation request origin not allowed                                    |
 | 404   | Record/endpoint not found                                              |
 | 413   | Image or multipart body exceeds configured limits                      |

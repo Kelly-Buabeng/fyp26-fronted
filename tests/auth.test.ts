@@ -3,13 +3,16 @@ import {
   assertSameOrigin,
   createSessionToken,
   passwordMatches,
+  credentialsMatch,
   verifySessionToken,
 } from '@/lib/server/auth';
+import { authorityDestination } from '@/lib/access';
 import { getConfig } from '@/lib/server/config';
-describe('GHA access controls', () => {
+describe('RHA access controls', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'test');
-    vi.stubEnv('ADMIN_PASSWORD', 'fixture-admin-password');
+    vi.stubEnv('ADMIN_EMAIL', 'authority@rha.com');
+    vi.stubEnv('ADMIN_PASSWORD', 'fixture-authority-password');
     vi.stubEnv('SESSION_SECRET', 'fixture-session-secret-at-least-32-characters');
     vi.stubEnv('APP_ORIGIN', 'http://localhost:3000');
   });
@@ -27,10 +30,37 @@ describe('GHA access controls', () => {
     expect(verifySessionToken(token)).toBe(false);
   });
   it('compares passwords and disables unconfigured admin access', () => {
-    expect(passwordMatches('fixture-admin-password')).toBe(true);
+    expect(passwordMatches('fixture-authority-password')).toBe(true);
     expect(passwordMatches('wrong')).toBe(false);
     vi.stubEnv('SESSION_SECRET', '');
-    expect(passwordMatches('fixture-admin-password')).toBe(false);
+    expect(passwordMatches('fixture-authority-password')).toBe(false);
+  });
+  it('requires the configured email and password', () => {
+    expect(credentialsMatch('authority@rha.com', 'fixture-authority-password')).toBe(true);
+    expect(credentialsMatch(' AUTHORITY@RHA.COM ', 'fixture-authority-password')).toBe(true);
+    expect(credentialsMatch('other@rha.com', 'fixture-authority-password')).toBe(false);
+    expect(credentialsMatch('authority@rha.com', 'wrong')).toBe(false);
+    vi.stubEnv('ADMIN_EMAIL', '');
+    expect(credentialsMatch('authority@rha.com', 'fixture-authority-password')).toBe(false);
+  });
+  it('revokes sessions when the authority email changes', () => {
+    const token = createSessionToken();
+    vi.stubEnv('ADMIN_EMAIL', 'replacement@rha.com');
+    expect(verifySessionToken(token)).toBe(false);
+  });
+  it('limits login destinations to authority pages', () => {
+    expect(authorityDestination('/report?min_confidence=0.8')).toBe('/report?min_confidence=0.8');
+    for (const value of [
+      undefined,
+      '/',
+      '/detect',
+      '//evil.example/report',
+      'https://evil.example',
+      '/\\evil.example/report',
+      '/%2f%2fevil.example',
+    ]) {
+      expect(authorityDestination(value)).toBe('/dashboard');
+    }
   });
   it('blocks missing or cross-origin mutation requests', () => {
     expect(() =>

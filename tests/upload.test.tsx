@@ -8,9 +8,9 @@ const mocks = vi.hoisted(() => ({ detect: vi.fn(), toast: vi.fn(), mutate: vi.fn
 vi.mock('@/lib/api/client', () => ({ detectImage: mocks.detect }));
 vi.mock('swr', () => ({ useSWRConfig: () => ({ mutate: mocks.mutate }) }));
 vi.mock('@/components/layout/providers', () => ({
-  useConsole: () => ({ role: 'gha', admin: false, toast: mocks.toast }),
+  useConsole: () => ({ role: 'gha', admin: true, toast: mocks.toast }),
   useHealth: () => ({ data: { pothole_model_ready: true } }),
-  useStats: () => ({ data: { mock_mode: false } }),
+  useStorageMode: () => ({ data: { mock_mode: false } }),
 }));
 const positive = {
   id: 'saved-id',
