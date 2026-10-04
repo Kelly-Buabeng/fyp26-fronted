@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { getHeatmap } from '@/lib/api/client';
 import type { HeatmapPoint } from '@/lib/api/types';
-import { useStats } from '@/components/layout/providers';
+import { useConsole, useStats, useStorageMode } from '@/components/layout/providers';
 import {
   Dialog,
   Empty,
@@ -31,6 +31,8 @@ export function LiveMap() {
   const [bands, setBands] = useState<Severity[]>(['high', 'medium', 'low']);
   const [selected, setSelected] = useState<HeatmapPoint | null>(null);
   const stats = useStats();
+  const storage = useStorageMode();
+  const { admin } = useConsole();
   const data = useSWR(
     ['heatmap', minimum, limit],
     () => getHeatmap({ min_confidence: minimum, limit }),
@@ -171,7 +173,7 @@ export function LiveMap() {
           </div>
           <div className={c('feed-note')}>
             Map points contain coordinates and confidence. Capture times and device IDs are
-            available in GHA records.
+            available in RHA records.
           </div>
         </div>
       </section>
@@ -185,8 +187,8 @@ export function LiveMap() {
               <Link href="/detect" className={c('btn quiet')}>
                 Report a pothole
               </Link>
-              <Link href="/report" className={c('btn solid')}>
-                Regional report
+              <Link href={admin ? '/report' : '/login?next=%2Freport'} className={c('btn solid')}>
+                {admin ? 'Regional report' : 'Authority workspace'}
               </Link>
             </>
           }
@@ -204,12 +206,12 @@ export function LiveMap() {
           />
           <Stat label="High confidence band" value={high} foot="Confidence ≥ 0.75" />
           <Stat
-            label="Devices recorded"
-            value={stats.data?.devices_active ?? '—'}
-            foot="Distinct device IDs in stored data"
+            label={admin ? 'Devices recorded' : 'Access'}
+            value={admin ? (stats.data?.devices_active ?? '—') : 'Public'}
+            foot={admin ? 'Distinct device IDs in stored data' : 'Live map and pothole reporting'}
           />
         </div>
-        {stats.data?.mock_mode && <MockNotice />}
+        {storage.data?.mock_mode && <MockNotice />}
       </section>
       <Dialog open={!!selected} onClose={() => setSelected(null)} label="Pothole location" drawer>
         {selected && (

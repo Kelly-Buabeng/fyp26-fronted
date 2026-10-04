@@ -4,7 +4,7 @@ import {
   clearSession,
   HttpError,
   isAdmin,
-  passwordMatches,
+  credentialsMatch,
   setSession,
 } from '@/lib/server/auth';
 import { getConfig } from '@/lib/server/config';
@@ -51,10 +51,14 @@ export async function POST(request: Request) {
     if (!getConfig().adminEnabled)
       throw new HttpError(
         503,
-        'GHA access is not configured. Set ADMIN_PASSWORD and SESSION_SECRET on the frontend server.',
+        'Authority access is not configured. Set ADMIN_EMAIL, ADMIN_PASSWORD, and SESSION_SECRET on the frontend server.',
       );
-    if (typeof data?.password !== 'string' || !passwordMatches(data.password))
-      throw new HttpError(401, 'Incorrect access password.');
+    if (
+      typeof data?.email !== 'string' ||
+      typeof data?.password !== 'string' ||
+      !credentialsMatch(data.email, data.password)
+    )
+      throw new HttpError(401, 'Email or password is incorrect.');
     await setSession();
     return NextResponse.json({ admin: true });
   } catch (e) {

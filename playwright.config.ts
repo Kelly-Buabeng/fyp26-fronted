@@ -30,7 +30,9 @@ export default defineConfig({
       env: {
         BACKEND_API_URL: 'http://127.0.0.1:8001',
         BACKEND_API_KEY: 'fixture-backend-key',
-        ADMIN_PASSWORD: 'fixture-admin-password',
+        ADMIN_EMAIL: 'authority@rha.com',
+        ADMIN_PASSWORD: 'fixture-authority-password',
+        TRUST_PROXY: 'true',
         SESSION_SECRET: 'fixture-session-secret-at-least-32-characters',
         APP_ORIGIN: 'http://localhost:3000',
       },

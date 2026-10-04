@@ -12,7 +12,7 @@ import {
   type DetectionFormValues,
   MAX_IMAGE_BYTES,
 } from '@/lib/validation/detection';
-import { useConsole, useHealth, useStats } from '@/components/layout/providers';
+import { useConsole, useHealth, useStorageMode } from '@/components/layout/providers';
 import {
   Empty,
   ErrorState,
@@ -64,7 +64,7 @@ async function prepareImage(file: File) {
 export function UploadForm() {
   const consoleState = useConsole();
   const health = useHealth();
-  const stats = useStats();
+  const stats = useStorageMode();
   const { mutate } = useSWRConfig();
   const form = useForm<DetectionFormValues>({
     resolver: zodResolver(detectionFormSchema),

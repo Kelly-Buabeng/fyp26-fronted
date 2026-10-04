@@ -27,7 +27,7 @@ export function Header() {
         </Link>
         <nav className={c('tabs')} aria-label="Main navigation">
           {pages
-            .filter(([url]) => state.role === 'gha' || !['/detections', '/devices'].includes(url))
+            .filter(([url]) => state.admin || ['/', '/detect'].includes(url))
             .map(([url, label]) => (
               <Link
                 key={url}
@@ -52,17 +52,9 @@ export function Header() {
                     : 'Model unavailable'}
             </span>
           </div>
-          <div className={c('seg')} aria-label="Console view">
-            {(['gha', 'public'] as const).map((role) => (
-              <button
-                key={role}
-                aria-pressed={state.role === role}
-                onClick={() => state.setRole(role)}
-              >
-                {role === 'gha' ? 'GHA' : 'Public'}
-              </button>
-            ))}
-          </div>
+          <span className={c('tag neutral')}>
+            {state.admin ? 'RHA personnel' : 'Public access'}
+          </span>
           <div className={c('seg')} aria-label="Display density">
             {(['comfortable', 'dense'] as const).map((d) => (
               <button
@@ -74,13 +66,14 @@ export function Header() {
               </button>
             ))}
           </div>
-          {state.role === 'gha' && (
-            <button
-              className={c('btn quiet login-button')}
-              onClick={() => (state.admin ? void state.logout() : state.openLogin())}
-            >
-              {state.admin ? 'Sign out' : 'Sign in'}
+          {state.admin ? (
+            <button className={c('btn quiet login-button')} onClick={() => void state.logout()}>
+              Sign out
             </button>
+          ) : (
+            <Link className={c('btn quiet login-button')} href="/login">
+              Authority login
+            </Link>
           )}
         </div>
       </header>

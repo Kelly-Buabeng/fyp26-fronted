@@ -34,7 +34,7 @@ export function ExportActions({ options }: { options?: QueryOptions }) {
           onClick={() => void download(format)}
         >
           {busy === format ? 'Downloading…' : format === 'csv' ? 'CSV' : 'GeoJSON'}
-          {!admin ? ' · GHA' : ''}
+          {!admin ? ' · RHA' : ''}
         </button>
       ))}
     </>

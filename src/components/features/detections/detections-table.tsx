@@ -22,10 +22,10 @@ import { c } from '@/lib/styles';
 export function AdminGate() {
   const { openLogin } = useConsole();
   return (
-    <Panel title="GHA access required">
+    <Panel title="RHA access required">
       <p>Sign in to view saved detection records and manage false positives.</p>
-      <button className={c('btn solid')} onClick={openLogin}>
-        Sign in as GHA
+      <button className={c('btn solid')} onClick={() => openLogin()}>
+        Sign in as RHA
       </button>
     </Panel>
   );

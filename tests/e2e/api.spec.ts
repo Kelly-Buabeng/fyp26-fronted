@@ -1,23 +1,69 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIRequestContext } from '@playwright/test';
 import fs from 'node:fs';
 const origin = { Origin: 'http://localhost:3000' };
+const credentials = { email: 'authority@rha.com', password: 'fixture-authority-password' };
+let loginAttempt = 0;
+async function signIn(request: APIRequestContext) {
+  return request.post('/api/auth', {
+    headers: { ...origin, 'X-Forwarded-For': `192.0.2.${++loginAttempt}` },
+    data: credentials,
+  });
+}
 const image = fs.readFileSync('tests/fixtures/road.png');
 test.beforeEach(async ({ request }) => {
   await request.post('http://127.0.0.1:8001/__scenario', { data: { scenario: 'normal' } });
 });
-test('serves every App Router page', async ({ request }) => {
-  for (const route of ['/', '/dashboard', '/detect', '/detections', '/devices', '/report']) {
+test('serves public pages and redirects protected pages before rendering', async ({ request }) => {
+  for (const route of ['/', '/detect', '/login']) {
     const response = await request.get(route);
-    expect(response.ok()).toBe(true);
+    expect(response.status()).toBe(200);
     expect(await response.text()).toContain('Roadwatch');
   }
+  for (const route of [
+    '/dashboard',
+    '/report',
+    '/detections',
+    '/devices',
+    '/report?min_confidence=0.8',
+    '/report?_rsc=prefetch',
+  ]) {
+    const response = await request.get(route, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    const target = new URL(response.headers().location, 'http://localhost:3000');
+    expect(target.pathname).toBe('/login');
+    expect(target.searchParams.get('next')).toBe(route.replace('?_rsc=prefetch', ''));
+  }
+  const forged = await request.get('/dashboard', {
+    maxRedirects: 0,
+    headers: { Cookie: 'roadwatch_session=forged-token' },
+  });
+  expect(forged.status()).toBe(307);
+  expect((await signIn(request)).status()).toBe(200);
+  for (const route of ['/dashboard', '/report', '/detections', '/devices']) {
+    expect((await request.get(route)).status()).toBe(200);
+  }
+  const unsafeReturn = await request.get('/login?next=https://attacker.example', {
+    maxRedirects: 0,
+  });
+  // App Router can emit a redirect in streamed HTML after headers are sent.
+  if (unsafeReturn.status() === 307) {
+    expect(unsafeReturn.headers().location).toBe('/dashboard');
+  } else {
+    expect(unsafeReturn.status()).toBe(200);
+    expect(await unsafeReturn.text()).toMatch(
+      /http-equiv="refresh" content="[01];url=\/dashboard"/,
+    );
+  }
 });
-test('proxies validated public map, health, statistics, and report contracts', async ({
-  request,
-}) => {
+test('keeps map and health public while protecting statistics and reports', async ({ request }) => {
   expect(await (await request.get('/api/backend/health')).json()).toMatchObject({
     pothole_model_ready: true,
   });
+  expect(await (await request.get('/api/backend/mode')).json()).toEqual({ mock_mode: false });
+  for (const endpoint of ['stats', 'report', 'service']) {
+    expect((await request.get('/api/backend/' + endpoint)).status()).toBe(401);
+  }
+  expect((await signIn(request)).status()).toBe(200);
   expect(await (await request.get('/api/backend/stats')).json()).toMatchObject({
     total_detections: 2,
     mock_mode: false,
@@ -112,6 +158,7 @@ test('rejects invalid files, coordinates, excessive uploads, and query parameter
     ).status(),
   ).toBe(413);
   expect((await request.get('/api/backend/heatmap?limit=2001')).status()).toBe(400);
+  await signIn(request);
   expect((await request.get('/api/backend/report?min_confidence=2')).status()).toBe(400);
   expect((await request.get('/api/backend/not-a-real-endpoint')).status()).toBe(404);
 });
@@ -128,21 +175,33 @@ test('rejects unauthorized and cross-origin administrative requests', async ({ r
     (
       await request.post('/api/auth', {
         headers: { Origin: 'https://attacker.example' },
-        data: { password: 'fixture-admin-password' },
+        data: credentials,
       })
     ).status(),
   ).toBe(403);
   expect(
-    (await request.post('/api/auth', { headers: origin, data: { password: 'wrong' } })).status(),
+    (
+      await request.post('/api/auth', {
+        headers: origin,
+        data: { email: credentials.email, password: 'wrong' },
+      })
+    ).status(),
+  ).toBe(401);
+});
+test('rejects a different email even with the authority password', async ({ request }) => {
+  expect(
+    (
+      await request.post('/api/auth', {
+        headers: origin,
+        data: { ...credentials, email: 'other@rha.com' },
+      })
+    ).status(),
   ).toBe(401);
 });
 test('issues signed HttpOnly sessions, exports data, deletes a record, and revokes access', async ({
   request,
 }) => {
-  const login = await request.post('/api/auth', {
-    headers: origin,
-    data: { password: 'fixture-admin-password' },
-  });
+  const login = await signIn(request);
   expect(login.status()).toBe(200);
   expect(login.headers()['set-cookie']).toContain('HttpOnly');
   expect(login.headers()['set-cookie']).toContain('SameSite=strict');
@@ -166,10 +225,13 @@ test('issues signed HttpOnly sessions, exports data, deletes a record, and revok
   ).toBe(404);
   await request.delete('/api/auth', { headers: origin });
   expect((await request.get('/api/backend/detections/export?format=csv')).status()).toBe(401);
+  expect((await request.get('/api/backend/stats')).status()).toBe(401);
+  expect((await request.get('/dashboard', { maxRedirects: 0 })).status()).toBe(307);
+  expect((await request.get('/')).status()).toBe(200);
 });
 test('reports mock mode and propagates backend failures', async ({ request }) => {
   await request.post('http://127.0.0.1:8001/__scenario', { data: { scenario: 'mock' } });
-  expect((await (await request.get('/api/backend/stats')).json()).mock_mode).toBe(true);
+  expect((await (await request.get('/api/backend/mode')).json()).mock_mode).toBe(true);
   await request.post('http://127.0.0.1:8001/__scenario', { data: { scenario: 'offline' } });
   expect((await request.get('/api/backend/heatmap')).status()).toBe(503);
 });

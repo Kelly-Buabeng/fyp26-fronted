@@ -63,7 +63,7 @@ export function RegionalReport() {
         <Lede
           eyebrow="Handoff"
           title="Regional severity report"
-          description="Detections grouped by nearest regional capital and confidence band for Ghana Highway Authority review."
+          description="Detections grouped by nearest regional capital and confidence band for Roads and Highway Authority review."
           actions={<ExportActions options={{ min_confidence: minimum, limit }} />}
         />
         <div className={c('spaced')}>
