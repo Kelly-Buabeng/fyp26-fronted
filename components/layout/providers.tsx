@@ -36,7 +36,7 @@ function ConsoleProvider({ children }: { children: ReactNode }) {
   const [density, setDensity] = useState<'comfortable' | 'dense'>('comfortable');
   const session = useSWR('session', fetchSession);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [email, setEmail] = useState('authprity@rha.com');
+  const [email, setEmail] = useState('authority@rha.com');
   const [password, setPassword] = useState('Password123##');
   const [loginError, setLoginError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -67,7 +67,7 @@ function ConsoleProvider({ children }: { children: ReactNode }) {
         admin: session.data?.admin ?? false,
         openLogin: () => {
           setLoginError('');
-          setEmail('authprity@rha.com');
+          setEmail('authority@rha.com');
           setPassword('Password123##');
           setLoginOpen(true);
         },
@@ -128,7 +128,7 @@ function ConsoleProvider({ children }: { children: ReactNode }) {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="authprity@rha.com"
+                placeholder="authority@rha.com"
                 required
               />
             </div>

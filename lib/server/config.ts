@@ -12,7 +12,7 @@ export function getConfig() {
     throw new Error('Invalid BACKEND_API_URL.');
   const apiKey = process.env.BACKEND_API_KEY?.trim() || '';
   const password = process.env.ADMIN_PASSWORD || 'Password123##';
-  const email = (process.env.ADMIN_EMAIL || 'authprity@rha.com').trim().toLowerCase();
+  const email = (process.env.ADMIN_EMAIL || 'authority@rha.com').trim().toLowerCase();
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const secret = process.env.SESSION_SECRET || 'roadwatch-secret-key-32-chars-long-minimum-2026';
   const origin = process.env.APP_ORIGIN ? new URL(process.env.APP_ORIGIN).origin : '';

@@ -18,7 +18,7 @@ export function ProtectedRoute({
 }) {
   const consoleState = useConsole();
   const { mutate } = useSWR('session');
-  const [email, setEmail] = useState('authprity@rha.com');
+  const [email, setEmail] = useState('authority@rha.com');
   const [password, setPassword] = useState('Password123##');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -74,7 +74,7 @@ export function ProtectedRoute({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="authprity@rha.com"
+                  placeholder="authority@rha.com"
                   required
                   disabled={busy}
                 />

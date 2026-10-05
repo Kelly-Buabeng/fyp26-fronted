@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const email = typeof data?.email === 'string' ? data.email.trim().toLowerCase() : '';
     const pass = typeof data?.password === 'string' ? data.password : '';
 
-    const validEmail = !email || ['authprity@rha.com', 'authority@rha.com'].includes(email);
+    const validEmail = !email || ['authority@rha.com', 'authority@rha.com'].includes(email);
     if (!validEmail || !passwordMatches(pass))
       throw new HttpError(401, 'Invalid email or access password.');
 
