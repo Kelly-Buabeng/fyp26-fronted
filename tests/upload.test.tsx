@@ -2,8 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UploadForm } from '@/components/features/detection/upload-form';
-import { ImagePreview } from '@/components/features/detection/image-preview';
+import { UploadForm } from '../components/features/detection/upload-form';
+import { ImagePreview } from '../components/features/detection/image-preview';
 const mocks = vi.hoisted(() => ({ detect: vi.fn(), toast: vi.fn(), mutate: vi.fn() }));
 vi.mock('@/lib/api/client', () => ({ detectImage: mocks.detect }));
 vi.mock('swr', () => ({ useSWRConfig: () => ({ mutate: mocks.mutate }) }));

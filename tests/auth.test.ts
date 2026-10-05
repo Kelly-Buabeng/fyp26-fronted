@@ -4,8 +4,8 @@ import {
   createSessionToken,
   passwordMatches,
   verifySessionToken,
-} from '@/lib/server/auth';
-import { getConfig } from '@/lib/server/config';
+} from '../lib/server/auth';
+import { getConfig } from '../lib/server/config';
 describe('GHA access controls', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'test');

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { detectionResponseSchema, heatmapSchema } from '@/lib/api/schemas';
-import { coordinatesSchema } from '@/lib/validation/detection';
-import { parseApiError } from '@/lib/api/errors';
-import { nearestRegion } from '@/lib/geo';
+import { detectionResponseSchema, heatmapSchema } from '../lib/api/schemas';
+import { coordinatesSchema } from '../lib/validation/detection';
+import { parseApiError } from '../lib/api/errors';
+import { nearestRegion } from '../lib/geo';
 describe('backend contracts', () => {
   it('accepts Ghana boundary coordinates and rejects invalid locations', () => {
     expect(coordinatesSchema.safeParse({ lat: 4.5, lng: -3.5 }).success).toBe(true);
