@@ -40,8 +40,19 @@ function filters(request: Request, kind: string) {
 export async function GET(request: Request, context: Context) {
   try {
     const path = (await context.params).path.join('/');
+    if (['stats', 'report', 'service'].includes(path) && !(await isAdmin()))
+      throw new HttpError(401, 'Sign in as authority personnel to access this feature.');
+    if (path === 'mode') {
+      const response = await backendRequest('/api/v1/stats', { signal: request.signal });
+      const result = schemas.statsSchema.safeParse(await response.json());
+      if (!result.success) throw new HttpError(502, 'The backend returned an unexpected response.');
+      return NextResponse.json(
+        { mock_mode: result.data.mock_mode },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
     if (path === 'detections/export') {
-      if (!(await isAdmin())) throw new HttpError(401, 'Sign in as GHA to export detections.');
+      if (!(await isAdmin())) throw new HttpError(401, 'Sign in as RHA to export detections.');
       const format = new URL(request.url).searchParams.get('format') || 'csv';
       if (!['csv', 'geojson'].includes(format)) throw new HttpError(400, 'Choose CSV or GeoJSON.');
       const params = filters(request, 'export');
@@ -154,7 +165,7 @@ export async function DELETE(request: Request, context: Context) {
     if (path.length !== 2 || path[0] !== 'detections' || !/^[a-zA-Z0-9_-]{1,128}$/.test(path[1]))
       throw new HttpError(404, 'Endpoint not found.');
     assertSameOrigin(request);
-    if (!(await isAdmin())) throw new HttpError(401, 'Sign in as GHA to delete detections.');
+    if (!(await isAdmin())) throw new HttpError(401, 'Sign in as RHA to delete detections.');
     const response = await backendRequest(
       '/api/v1/detections/' + encodeURIComponent(path[1]),
       { method: 'DELETE', signal: request.signal },

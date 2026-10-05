@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getConfig } from './config';
 export const COOKIE_NAME = 'roadwatch_session';
 const TTL = 8 * 60 * 60;
@@ -8,6 +9,8 @@ function sign(payload: string) {
   const c = getConfig();
   return createHmac('sha256', c.secret)
     .update(c.password)
+    .update('\0')
+    .update(c.email)
     .update('\0')
     .update(payload)
     .digest('base64url');
@@ -47,6 +50,17 @@ export function passwordMatches(candidate: string) {
   if (!configured.adminEnabled) return false;
   const hash = (v: string) => createHash('sha256').update(v).digest();
   return timingSafeEqual(hash(candidate), hash(configured.password));
+}
+export function credentialsMatch(email: string, password: string) {
+  const configured = getConfig();
+  if (!configured.adminEnabled) return false;
+  const hash = (value: string) => createHash('sha256').update(value).digest();
+  const emailValid = timingSafeEqual(hash(email.trim().toLowerCase()), hash(configured.email));
+  const passwordValid = passwordMatches(password);
+  return emailValid && passwordValid;
+}
+export async function requireAuthority(path: string) {
+  if (!(await isAdmin())) redirect('/login?next=' + encodeURIComponent(path));
 }
 export async function setSession() {
   (await cookies()).set(COOKIE_NAME, createSessionToken(), {

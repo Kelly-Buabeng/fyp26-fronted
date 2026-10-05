@@ -50,17 +50,9 @@ export function Header() {
                     : 'Model unavailable'}
             </span>
           </div>
-          <div className={c('seg')} aria-label="Console view">
-            {(['gha', 'public'] as const).map((role) => (
-              <button
-                key={role}
-                aria-pressed={state.role === role}
-                onClick={() => state.setRole(role)}
-              >
-                {role === 'gha' ? 'GHA' : 'Public'}
-              </button>
-            ))}
-          </div>
+          <span className={c('tag neutral')}>
+            {state.admin ? 'RHA personnel' : 'Public access'}
+          </span>
           <div className={c('seg')} aria-label="Display density">
             {(['comfortable', 'dense'] as const).map((d) => (
               <button
@@ -72,12 +64,14 @@ export function Header() {
               </button>
             ))}
           </div>
-          <button
-            className={c('btn quiet login-button')}
-            onClick={() => (state.admin ? void state.logout() : state.openLogin())}
-          >
-            {state.admin ? 'Sign out' : 'Sign in'}
-          </button>
+          {state.role === 'gha' && (
+            <button
+              className={c('btn quiet login-button')}
+              onClick={() => (state.admin ? void state.logout() : state.openLogin())}
+            >
+              {state.admin ? 'Sign out' : 'Sign in'}
+            </button>
+          )}
         </div>
       </header>
     </>

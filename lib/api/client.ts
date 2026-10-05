@@ -29,6 +29,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
 }
 export const getServiceInfo = () => request('/service', s.serviceSchema);
 export const getHealth = () => request('/health', s.healthSchema);
+export const getStorageMode = () => request('/mode', z.object({ mock_mode: z.boolean() }));
 export const getHeatmap = (options?: QueryOptions) =>
   request('/heatmap' + query(options), s.heatmapSchema);
 export const getStats = () => request('/stats', s.statsSchema);
