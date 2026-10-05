@@ -5,6 +5,7 @@ import {
   HttpError,
   isAdmin,
   credentialsMatch,
+  passwordMatches,
   setSession,
 } from '../../../lib/server/auth';
 import { getConfig } from '../../../lib/server/config';

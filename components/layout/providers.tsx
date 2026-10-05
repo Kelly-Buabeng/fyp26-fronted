@@ -24,6 +24,7 @@ export const useConsole = () => {
 };
 export const useHealth = () => useSWR('health', getHealth, { refreshInterval: 30000 });
 export const useStats = () => useSWR('stats', getStats, { refreshInterval: 30000 });
+export const useAuthoritySession = () => useSWR('session', fetchSession);
 async function fetchSession() {
   const response = await fetch('/api/auth', { cache: 'no-store' });
   const data = await response.json();

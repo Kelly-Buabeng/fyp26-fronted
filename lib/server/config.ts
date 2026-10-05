@@ -12,6 +12,8 @@ export function getConfig() {
     throw new Error('Invalid BACKEND_API_URL.');
   const apiKey = process.env.BACKEND_API_KEY?.trim() || '';
   const password = process.env.ADMIN_PASSWORD || 'Password123##';
+  const email = (process.env.ADMIN_EMAIL || 'authprity@rha.com').trim().toLowerCase();
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const secret = process.env.SESSION_SECRET || 'roadwatch-secret-key-32-chars-long-minimum-2026';
   const origin = process.env.APP_ORIGIN ? new URL(process.env.APP_ORIGIN).origin : '';
   const timeout = Number(process.env.BACKEND_TIMEOUT_MS || 120000);
@@ -21,21 +23,23 @@ export function getConfig() {
     production &&
     (!apiKey ||
       apiKey === 'change-this-in-production' ||
+      !validEmail ||
       password.length < 12 ||
       secret.length < 32 ||
       !origin.startsWith('https://'))
   )
     throw new Error(
-      'Production configuration requires a backend key, ADMIN_PASSWORD (12+ characters), SESSION_SECRET (32+ characters), and HTTPS APP_ORIGIN.',
+      'Production configuration requires a backend key, ADMIN_EMAIL, ADMIN_PASSWORD (12+ characters), SESSION_SECRET (32+ characters), and HTTPS APP_ORIGIN.',
     );
   return {
     production,
     apiUrl: apiUrl.toString().replace(/\/$/, ''),
     apiKey,
     password,
+    email,
     secret,
     origin,
     timeout,
-    adminEnabled: password.length >= 12 && secret.length >= 32,
+    adminEnabled: validEmail && password.length >= 12 && secret.length >= 32,
   };
 }

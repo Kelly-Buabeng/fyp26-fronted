@@ -65,7 +65,7 @@ async function prepareImage(file: File) {
 export function UploadForm() {
   const consoleState = useConsole();
   const health = useHealth();
-  const stats = useStorageMode();
+  const stats = useStats();
   const { mutate } = useSWRConfig();
   const form = useForm<DetectionFormValues>({
     resolver: zodResolver(detectionFormSchema),
