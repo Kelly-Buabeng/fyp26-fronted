@@ -134,7 +134,7 @@ export function GalleryView() {
 
                   <div style={{ padding: '14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{item.device_id || 'Device'}</span>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{(item.device_id || 'esp32_cam_01').toLowerCase()}</span>
                       {item.confidence > 0 && <SeverityTag confidence={item.confidence} />}
                     </div>
 
@@ -218,7 +218,7 @@ export function GalleryView() {
               <dt>Record ID</dt>
               <dd className={c('mono')}>{selectedItem.id}</dd>
               <dt>Device Name / ID</dt>
-              <dd>{selectedItem.device_id}</dd>
+              <dd>{(selectedItem.device_id || 'esp32_cam_01').toLowerCase()}</dd>
               <dt>Location Name</dt>
               <dd style={{ fontWeight: 600 }}>{getLocationName({ lat: selectedItem.lat, lng: selectedItem.lng })}</dd>
               <dt>Confidence Score</dt>
