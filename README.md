@@ -1,4 +1,4 @@
-# Roadwatch Next.js frontend;;;;;;;
+# Roadwatch Next.js frontend.
 
 Next.js 16.3.8 App Router, React 19.3.0, TypeScript, CSS Modules, React Hook Form,
 Zod, SWR, and Leaflet. This application ports `pothole-console-v2.html` from the
