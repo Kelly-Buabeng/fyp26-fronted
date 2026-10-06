@@ -265,7 +265,7 @@ export function UploadForm() {
                   >
                     1
                   </span>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>📷 Road Photo</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}> Road Photo</h3>
                 </div>
 
                 <div
@@ -318,7 +318,7 @@ export function UploadForm() {
                     disabled={busy || preparing}
                     style={{ minHeight: '44px', padding: '0 20px' }}
                   >
-                    {preparing ? 'Preparing image…' : image ? 'Change photo' : '📷 Choose photo'}
+                    {preparing ? 'Preparing image…' : image ? 'Change photo' : ' Choose photo'}
                   </button>
                   {image && (
                     <span className={c('muted')} style={{ marginTop: '8px', fontSize: '0.85rem' }}>
@@ -357,7 +357,7 @@ export function UploadForm() {
                   >
                     2
                   </span>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>📍 Pothole Location</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}> Pothole Location</h3>
                 </div>
 
                 <LocationPicker
@@ -396,7 +396,7 @@ export function UploadForm() {
                   >
                     3
                   </span>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>📱 Device Identifier</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}> Device Identifier</h3>
                 </div>
 
                 <div className={c('field')}>
