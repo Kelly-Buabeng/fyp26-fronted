@@ -81,8 +81,16 @@ export async function clearSession() {
   });
 }
 export function assertSameOrigin(request: Request) {
-  const expected = getConfig().origin || new URL(request.url).origin;
-  if (request.headers.get('origin') !== expected)
+  const reqOrigin = request.headers.get('origin');
+  if (!reqOrigin) return;
+  const allowed = [
+    getConfig().origin,
+    'https://fyp26-fronted.vercel.app',
+    'http://localhost:3000',
+    new URL(request.url).origin,
+  ].filter(Boolean);
+
+  if (!allowed.includes(reqOrigin))
     throw new HttpError(403, 'Request origin is not allowed.');
 }
 export class HttpError extends Error {

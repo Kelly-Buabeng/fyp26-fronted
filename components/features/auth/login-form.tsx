@@ -55,14 +55,6 @@ export function LoginForm({ destination }: { destination: string }) {
             Sign in to your Roadwatch workspace to review detections, understand regional
             conditions, and manage road intelligence.
           </p>
-          <div className={c('login-road')} aria-hidden="true">
-            <svg viewBox="0 0 400 160">
-              <path d="M20 140 C130 140 160 20 380 20" />
-              <path d="M20 110 C130 110 160 -10 380 -10" />
-              <path d="M20 170 C130 170 160 50 380 50" />
-              <circle cx="200" cy="70" r="8" />
-            </svg>
-          </div>
           <div className={c('login-benefits')}>
             <span>
               <i /> Detection review

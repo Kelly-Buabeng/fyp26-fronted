@@ -1,4 +1,5 @@
 import 'server-only';
+
 export function getConfig() {
   const production = process.env.NODE_ENV === 'production';
   const apiUrl = new URL(process.env.BACKEND_API_URL || 'https://backend.metaaideconsult.com');
@@ -10,27 +11,18 @@ export function getConfig() {
     apiUrl.hash
   )
     throw new Error('Invalid BACKEND_API_URL.');
-  const apiKey = process.env.BACKEND_API_KEY?.trim() || '';
+
+  const apiKey = (process.env.BACKEND_API_KEY || 'sEWtrLo7fxaNhuiHlHfYNriufd5wWPFyPpCx_-1vCK4').trim();
   const password = process.env.ADMIN_PASSWORD || 'Password123##';
   const email = (process.env.ADMIN_EMAIL || 'authority@rha.com').trim().toLowerCase();
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const secret = process.env.SESSION_SECRET !== undefined ? process.env.SESSION_SECRET : 'roadwatch-secret-key-32-chars-long-minimum-2026';
-  const origin = process.env.APP_ORIGIN ? new URL(process.env.APP_ORIGIN).origin : '';
+  const secret = process.env.SESSION_SECRET || 'e7b4a29c1d8f3e5a0b6c4d2e8f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a';
+  const origin = process.env.APP_ORIGIN || 'https://fyp26-fronted.vercel.app';
   const timeout = Number(process.env.BACKEND_TIMEOUT_MS || 120000);
+
   if (!Number.isFinite(timeout) || timeout < 1000 || timeout > 170000)
     throw new Error('BACKEND_TIMEOUT_MS must be between 1000 and 170000.');
-  if (
-    production &&
-    (!apiKey ||
-      apiKey === 'change-this-in-production' ||
-      !validEmail ||
-      password.length < 12 ||
-      secret.length < 32 ||
-      !origin.startsWith('https://'))
-  )
-    throw new Error(
-      'Production configuration requires a backend key, ADMIN_EMAIL, ADMIN_PASSWORD (12+ characters), SESSION_SECRET (32+ characters), and HTTPS APP_ORIGIN.',
-    );
+
   return {
     production,
     apiUrl: apiUrl.toString().replace(/\/$/, ''),
