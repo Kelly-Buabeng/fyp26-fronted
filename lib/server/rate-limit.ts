@@ -5,10 +5,7 @@ const windows = new Map<string, { count: number; expires: number }>();
 export function rateLimit(request: Request, category: string, maximum: number, duration: number) {
   const now = Date.now();
   for (const [key, value] of windows) if (value.expires <= now) windows.delete(key);
-  const ip =
-    process.env.TRUST_PROXY === 'true'
-      ? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-      : 'shared';
+  const ip = 'shared';
   const key = category + ':' + ip;
   const bucket = windows.get(key) || { count: 0, expires: now + duration };
   bucket.count++;
