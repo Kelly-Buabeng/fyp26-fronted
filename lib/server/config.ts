@@ -1,7 +1,7 @@
 import 'server-only';
 export function getConfig() {
   const production = process.env.NODE_ENV === 'production';
-  const apiUrl = new URL(process.env.BACKEND_API_URL || 'https://web-production-0431d.up.railway.app');
+  const apiUrl = new URL(process.env.BACKEND_API_URL || 'https://backend.metaaideconsult.com');
   if (
     !['http:', 'https:'].includes(apiUrl.protocol) ||
     apiUrl.username ||
