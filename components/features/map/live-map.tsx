@@ -132,7 +132,7 @@ export function LiveMap() {
             style={{ ...toggleBtnStyle, top: '16px', left: '16px' }}
             onClick={() => setShowTitle(true)}
           >
-            ℹ️ Overview
+            ℹ Overview
           </button>
         )}
 
@@ -220,7 +220,7 @@ export function LiveMap() {
             }}
             onClick={() => setShowFilter(true)}
           >
-            ⚙️ Filters
+            Filters
           </button>
         )}
 
@@ -281,7 +281,7 @@ export function LiveMap() {
             style={{ ...toggleBtnStyle, top: '16px', right: '16px' }}
             onClick={() => setShowFeed(true)}
           >
-            📋 Location Feed ({points.length})
+            Location Feed ({points.length})
           </button>
         )}
       </section>
@@ -342,8 +342,8 @@ export function LiveMap() {
               {(() => {
                 const imageUrl = selected.image_url
                   ? (selected.image_url.startsWith('http')
-                      ? selected.image_url
-                      : `/api/backend${selected.image_url.replace('/api/v1', '')}`)
+                    ? selected.image_url
+                    : `/api/backend${selected.image_url.replace('/api/v1', '')}`)
                   : selected.id
                     ? `/api/backend/images/${selected.id}`
                     : `/api/backend/images/${selected.lat}-${selected.lng}`;
