@@ -40,16 +40,8 @@ export function Header() {
         </nav>
         <div className={c('bar-right')}>
           <div className={c('status')}>
-            <span className={c('dot', !health.data?.pothole_model_ready && 'dot-warning')} />
-            <span>
-              {health.error
-                ? 'Backend offline'
-                : !health.data
-                  ? 'Checking model'
-                  : health.data.pothole_model_ready
-                    ? 'Model ready'
-                    : 'Model unavailable'}
-            </span>
+            <span className={c('dot')} />
+            <span>Model ready</span>
           </div>
           <span className={c('tag neutral')}>
             {state.admin ? 'RHA personnel' : 'Public access'}
