@@ -75,7 +75,7 @@ createServer(async (req, res) => {
       return json(
         res,
         200,
-        filtered.map((r) => ({ lat: r.lat, lng: r.lng, intensity: r.confidence })),
+        filtered.map((r) => ({ id: r.id, lat: r.lat, lng: r.lng, intensity: r.confidence, image_url: r.image_url })),
       );
     if (url.pathname === '/api/v1/report') {
       const groups = new Map();

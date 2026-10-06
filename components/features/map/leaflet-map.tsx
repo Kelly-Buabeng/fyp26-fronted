@@ -3,8 +3,9 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import type { HeatmapPoint } from '../../../lib/api/types';
 import { severity, severityColors } from '../../../lib/format';
-import { nearestRegion } from '../../../lib/geo';
+import { nearestRegion, getLocationName } from '../../../lib/geo';
 import { c } from '../../../lib/styles';
+
 export default function LeafletMap({
   points,
   onSelect,
@@ -15,9 +16,10 @@ export default function LeafletMap({
   const element = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
+
   useEffect(() => {
     if (!element.current) return;
-    const instance = L.map(element.current, { zoomControl: false }).setView([7.5, -1.1], 7);
+    const instance = L.map(element.current, { zoomControl: false }).setView([5.6, -0.18], 11);
     L.control.zoom({ position: 'bottomright' }).addTo(instance);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
@@ -34,6 +36,7 @@ export default function LeafletMap({
       markers.current = null;
     };
   }, []);
+
   useEffect(() => {
     const layer = markers.current;
     if (!layer) return;
@@ -41,7 +44,7 @@ export default function LeafletMap({
     for (const point of points) {
       const color = severityColors[severity(point.intensity)];
       const tooltip = document.createElement('span');
-      tooltip.textContent = `${nearestRegion(point)} · ${point.intensity.toFixed(2)}`;
+      tooltip.textContent = `${getLocationName(point)} · ${point.intensity.toFixed(2)}`;
       L.circleMarker([point.lat, point.lng], {
         radius: 4 + point.intensity * 8,
         color,
@@ -54,6 +57,7 @@ export default function LeafletMap({
         .bindTooltip(tooltip);
     }
   }, [points, onSelect]);
+
   return (
     <div ref={element} className={c('mapCanvas')} aria-label="Pothole locations across Ghana" />
   );

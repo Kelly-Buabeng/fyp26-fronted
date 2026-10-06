@@ -18,33 +18,71 @@ import { c } from '../../../lib/styles';
 import { severityColors, dateTime } from '../../../lib/format';
 import { errorMessage } from '../../../lib/api/errors';
 export function SeverityStack({ region }: { region: RegionReport }) {
+  const { high, medium, low } = region.severity_breakdown;
+  const labels: Record<'high' | 'medium' | 'low', string> = {
+    high: `High Severity (Red ≥ 0.75): ${high} potholes`,
+    medium: `Medium Severity (Amber 0.50–0.74): ${medium} potholes`,
+    low: `Low Severity (Green < 0.50): ${low} potholes`,
+  };
+
   return (
     <div
       className={c('stack')}
-      aria-label={`High ${region.severity_breakdown.high}, medium ${region.severity_breakdown.medium}, low ${region.severity_breakdown.low}`}
+      aria-label={`High ${high}, medium ${medium}, low ${low}`}
+      title={`${region.region}: ${high} High (Red), ${medium} Medium (Amber), ${low} Low (Green)`}
+      style={{ borderRadius: '6px', overflow: 'hidden' }}
     >
       {(['high', 'medium', 'low'] as const).map((b) => (
         <span
           key={b}
-          style={{ flex: region.severity_breakdown[b], background: severityColors[b] }}
+          title={labels[b]}
+          style={{
+            flex: region.severity_breakdown[b],
+            background: severityColors[b],
+            transition: 'opacity 0.15s ease',
+          }}
         />
       ))}
     </div>
   );
 }
-export function RegionBars({ regions }: { regions: RegionReport[] }) {
+
+export function RegionBars({
+  regions,
+  onSelectRegion,
+}: {
+  regions: RegionReport[];
+  onSelectRegion?: (region: RegionReport) => void;
+}) {
   const max = Math.max(...regions.map((r) => r.total), 1);
   return (
     <>
-      {regions.map((r) => (
-        <div className={c('bar-row')} key={r.region}>
-          <span className={c('n')}>{r.region}</span>
-          <div style={{ width: Math.max(6, (r.total / max) * 100) + '%' }}>
-            <SeverityStack region={r} />
+      {regions.map((r) => {
+        const { high, medium, low } = r.severity_breakdown;
+        return (
+          <div
+            className={c('bar-row')}
+            key={r.region}
+            onClick={() => onSelectRegion?.(r)}
+            style={{
+              cursor: onSelectRegion ? 'pointer' : 'default',
+              padding: '6px 8px',
+              borderRadius: '8px',
+              transition: 'background 0.15s ease',
+            }}
+            title={`${r.region} — High: ${high} | Medium: ${medium} | Low: ${low} (Click for extensive details)`}
+          >
+            <span className={c('n')} style={{ fontWeight: 600 }}>{r.region}</span>
+            <div style={{ width: Math.max(6, (r.total / max) * 100) + '%' }}>
+              <SeverityStack region={r} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className={c('push-right')}>
+              <span className={c('mono')}>{r.total}</span>
+              {onSelectRegion && <span style={{ opacity: 0.4, fontSize: '0.85rem' }}>➔</span>}
+            </div>
           </div>
-          <span className={c('mono text-right')}>{r.total}</span>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }

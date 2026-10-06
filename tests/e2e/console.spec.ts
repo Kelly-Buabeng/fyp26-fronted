@@ -22,7 +22,7 @@ test('public navigation stays limited and authority login reveals aggregate scre
   await page.getByRole('link', { name: 'Authority login', exact: true }).click();
   await signIn(page);
   await expect(
-    page.getByRole('heading', { name: 'Road intelligence, in four numbers' }),
+    page.getByRole('heading', { name: 'Road intelligence overview' }),
   ).toBeVisible();
   await expect(page.getByText('Greater Accra', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Regional report', exact: true }).click();
@@ -68,7 +68,7 @@ test('invalid location and unsupported media are rejected before inference', asy
     buffer: Buffer.from('invalid-video'),
   });
   await expect(
-    page.getByText('Choose a JPEG or PNG image. Video uploads are not supported by the backend.'),
+    page.getByText('Choose an image file. Video uploads are not supported by the backend.'),
   ).toBeVisible();
   await page.getByLabel('Road image', { exact: true }).setInputFiles(image);
   await page.getByLabel('Latitude', { exact: true }).fill('1');

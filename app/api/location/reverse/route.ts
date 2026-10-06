@@ -20,7 +20,16 @@ export async function GET(request: Request) {
         'Cache-Control': 'public, max-age=300, s-maxage=3600',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (
+      request.signal.aborted ||
+      error?.name === 'AbortError' ||
+      error?.name === 'ResponseAborted' ||
+      (typeof error?.message === 'string' &&
+        (error.message.includes('abort') || error.message.includes('ResponseAborted')))
+    ) {
+      return NextResponse.json(null);
+    }
     console.error('Location reverse API route error:', error);
     return NextResponse.json(null, { status: 500 });
   }

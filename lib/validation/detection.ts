@@ -16,7 +16,13 @@ export const coordinatesSchema = z.object({
 export const detectionFormSchema = coordinatesSchema.extend({
   image: z
     .custom<File>((v) => typeof File !== 'undefined' && v instanceof File, 'Choose a road image.')
-    .refine((f) => f && ['image/jpeg', 'image/png'].includes(f.type), 'Choose a JPEG or PNG image.')
+    .refine(
+      (f) =>
+        f &&
+        (f.type.startsWith('image/') ||
+          /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif|tiff)$/i.test(f.name)),
+      'Choose a valid image file (JPEG, PNG, WebP, GIF, BMP, HEIC, etc.).',
+    )
     .refine(
       (f) => f && f.size > 0 && f.size <= MAX_IMAGE_BYTES,
       'Image must be between 1 byte and 10 MiB.',

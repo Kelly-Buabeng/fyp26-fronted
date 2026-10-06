@@ -8,6 +8,7 @@ const pages = [
   ['/dashboard', 'Dashboard'],
   ['/report', 'Regional report'],
   ['/detections', 'Detections'],
+  ['/gallery', 'Gallery'],
   ['/detect', 'Run detection'],
   ['/devices', 'Devices'],
 ] as const;
@@ -53,17 +54,6 @@ export function Header() {
           <span className={c('tag neutral')}>
             {state.admin ? 'RHA personnel' : 'Public access'}
           </span>
-          <div className={c('seg')} aria-label="Display density">
-            {(['comfortable', 'dense'] as const).map((d) => (
-              <button
-                key={d}
-                aria-pressed={state.density === d}
-                onClick={() => state.setDensity(d)}
-              >
-                {d === 'dense' ? 'Dense' : 'Calm'}
-              </button>
-            ))}
-          </div>
           {state.role === 'gha' && (
             <button
               className={c('btn quiet login-button')}

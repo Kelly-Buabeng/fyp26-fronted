@@ -1,3 +1,5 @@
+import { ACCRA_LANDMARKS, nearestRegion } from '../geo';
+
 export type LocationSuggestion = {
   id: string;
   name: string;
@@ -33,6 +35,32 @@ type PhotonResponse = {
   features: PhotonFeature[];
 };
 
+const searchCache = new Map<string, LocationSuggestion[]>();
+
+export function searchLocalLandmarks(query: string): LocationSuggestion[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed || trimmed.length < 2) return [];
+
+  const matches: LocationSuggestion[] = [];
+  for (let i = 0; i < ACCRA_LANDMARKS.length; i++) {
+    const item = ACCRA_LANDMARKS[i];
+    if (item.name.toLowerCase().includes(trimmed)) {
+      const region = nearestRegion({ lat: item.lat, lng: item.lng });
+      matches.push({
+        id: `local-${i}-${item.lat}-${item.lng}`,
+        name: item.name,
+        formattedAddress: `${item.name}, ${region}, Ghana`,
+        lat: item.lat,
+        lng: item.lng,
+        city: item.name.split(',')[0],
+        state: region,
+        country: 'Ghana',
+      });
+    }
+  }
+  return matches;
+}
+
 function formatPhotonFeature(feature: PhotonFeature, index: number): LocationSuggestion {
   const p = feature.properties;
   const lng = feature.geometry.coordinates[0];
@@ -48,9 +76,7 @@ function formatPhotonFeature(feature: PhotonFeature, index: number): LocationSug
     p.country,
   ].filter((item): item is string => Boolean(item && item !== primaryName));
 
-  // Deduplicate parts
   const uniqueParts = Array.from(new Set(parts));
-  const formattedAddress = uniqueParts.length > 0 ? uniqueParts.join(', ') : primaryName;
 
   return {
     id: `${p.osm_id || index}-${lat}-${lng}`,
@@ -71,41 +97,58 @@ export async function searchLocationPhoton(
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
-  // Ghana bounding box: lon min -3.5, lat min 4.5, lon max 1.5, lat max 11.5
-  const bboxUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&lat=7.9465&lon=-1.0232&bbox=-3.5,4.5,1.5,11.5&limit=6`;
+  const cacheKey = trimmed.toLowerCase();
+  if (searchCache.has(cacheKey)) {
+    return searchCache.get(cacheKey)!;
+  }
+
+  const localResults = searchLocalLandmarks(trimmed);
+
+  const bboxUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&lat=7.9465&lon=-1.0232&bbox=-3.5,4.5,1.5,11.5&limit=8`;
 
   try {
-    const res = await fetch(bboxUrl, { signal });
+    const fetchController = new AbortController();
+    const timeoutId = setTimeout(() => fetchController.abort(), 1500);
+
+    const onAbort = () => fetchController.abort();
+    signal?.addEventListener('abort', onAbort);
+
+    const res = await fetch(bboxUrl, { signal: fetchController.signal }).finally(() => {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', onAbort);
+    });
+
     if (!res.ok) throw new Error(`Photon API returned ${res.status}`);
     const data: PhotonResponse = await res.json();
 
-    let suggestions = (data.features || []).map((feat, idx) => formatPhotonFeature(feat, idx));
+    const remoteSuggestions = (data.features || []).map((feat, idx) => formatPhotonFeature(feat, idx));
 
-    // If bbox yielded too few results, query with Ghana center bias
-    if (suggestions.length < 3) {
-      const fallbackUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&lat=7.9465&lon=-1.0232&limit=6`;
-      const fallbackRes = await fetch(fallbackUrl, { signal }).catch(() => null);
-      if (fallbackRes?.ok) {
-        const fallbackData: PhotonResponse = await fallbackRes.json();
-        const fallbackSuggestions = (fallbackData.features || []).map((feat, idx) =>
-          formatPhotonFeature(feat, idx + 100),
-        );
+    const combined = [...localResults];
+    const existingCoords = new Set(localResults.map((r) => `${r.lat.toFixed(3)},${r.lng.toFixed(3)}`));
 
-        // Merge without duplicates
-        const existingIds = new Set(suggestions.map((s) => `${s.lat},${s.lng}`));
-        for (const item of fallbackSuggestions) {
-          if (!existingIds.has(`${item.lat},${item.lng}`)) {
-            suggestions.push(item);
-          }
-        }
+    for (const rem of remoteSuggestions) {
+      const key = `${rem.lat.toFixed(3)},${rem.lng.toFixed(3)}`;
+      if (!existingCoords.has(key)) {
+        existingCoords.add(key);
+        combined.push(rem);
       }
     }
 
-    return suggestions.slice(0, 6);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') return [];
-    console.error('Photon geocoding search error:', error);
-    return [];
+    const finalResults = combined.slice(0, 8);
+    searchCache.set(cacheKey, finalResults);
+    return finalResults;
+  } catch (error: any) {
+    const isAbort =
+      signal?.aborted ||
+      error?.name === 'AbortError' ||
+      error?.name === 'ResponseAborted' ||
+      error?.code === '20' ||
+      (typeof error?.message === 'string' &&
+        (error.message.includes('abort') || error.message.includes('ResponseAborted')));
+
+    if (isAbort) return localResults;
+    searchCache.set(cacheKey, localResults);
+    return localResults;
   }
 }
 
@@ -116,13 +159,22 @@ export async function reverseGeocodePhoton(
 ): Promise<LocationSuggestion | null> {
   const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
   try {
-    const res = await fetch(url, { signal });
+    const fetchController = new AbortController();
+    const timeoutId = setTimeout(() => fetchController.abort(), 1500);
+
+    const onAbort = () => fetchController.abort();
+    signal?.addEventListener('abort', onAbort);
+
+    const res = await fetch(url, { signal: fetchController.signal }).finally(() => {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', onAbort);
+    });
+
     if (!res.ok) return null;
     const data: PhotonResponse = await res.json();
     if (!data.features || data.features.length === 0) return null;
     return formatPhotonFeature(data.features[0], 0);
-  } catch (error) {
-    console.error('Photon reverse geocoding error:', error);
+  } catch {
     return null;
   }
 }

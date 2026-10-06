@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { LocationSuggestion } from '../../../lib/api/location';
+import { searchLocalLandmarks } from '../../../lib/api/location';
+import { getLocationName } from '../../../lib/geo';
 import { c } from '../../../lib/styles';
 
 interface LocationPickerProps {
@@ -46,7 +48,7 @@ export function LocationPicker({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Perform Photon search with debounce
+  // Perform search with instant local landmark matching + fast network fallback
   const fetchSuggestions = useCallback((searchQuery: string) => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -57,6 +59,13 @@ export function LocationPicker({
       setLoadingSuggestions(false);
       setShowDropdown(false);
       return;
+    }
+
+    // Instant local matches (0ms delay!)
+    const localMatches = searchLocalLandmarks(trimmed);
+    if (localMatches.length > 0) {
+      setSuggestions(localMatches);
+      setShowDropdown(true);
     }
 
     setLoadingSuggestions(true);
@@ -71,17 +80,18 @@ export function LocationPicker({
         });
         if (res.ok) {
           const data: LocationSuggestion[] = await res.json();
-          setSuggestions(data);
-          setShowDropdown(data.length > 0);
-          setActiveIndex(-1);
+          if (data.length > 0) {
+            setSuggestions(data);
+            setShowDropdown(true);
+            setActiveIndex(-1);
+          }
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        console.error('Failed to search locations:', err);
       } finally {
         setLoadingSuggestions(false);
       }
-    }, 250);
+    }, 100);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,26 +128,25 @@ export function LocationPicker({
         const userLat = Number(pos.coords.latitude.toFixed(6));
         const userLng = Number(pos.coords.longitude.toFixed(6));
 
-        // Attempt reverse geocoding with Photon API
+        // Use clean human location name immediately
+        const humanName = getLocationName({ lat: userLat, lng: userLng });
+        setQuery(humanName);
+        setSelectedAddress(humanName);
+        onSelectLocation({ lat: userLat, lng: userLng, address: humanName });
+
+        // Optional reverse geocode for higher detail street address
         try {
           const res = await fetch(`/api/location/reverse?lat=${userLat}&lng=${userLng}`);
           if (res.ok) {
             const data: LocationSuggestion | null = await res.json();
-            const address = data?.formattedAddress || `Current Location (${userLat}, ${userLng})`;
-            setQuery(address);
-            setSelectedAddress(address);
-            onSelectLocation({ lat: userLat, lng: userLng, address });
-          } else {
-            const fallbackAddress = `Current Location (${userLat}, ${userLng})`;
-            setQuery(fallbackAddress);
-            setSelectedAddress(fallbackAddress);
-            onSelectLocation({ lat: userLat, lng: userLng, address: fallbackAddress });
+            if (data?.formattedAddress && !data.formattedAddress.includes('Current Location')) {
+              setQuery(data.formattedAddress);
+              setSelectedAddress(data.formattedAddress);
+              onSelectLocation({ lat: userLat, lng: userLng, address: data.formattedAddress });
+            }
           }
         } catch {
-          const fallbackAddress = `Current Location (${userLat}, ${userLng})`;
-          setQuery(fallbackAddress);
-          setSelectedAddress(fallbackAddress);
-          onSelectLocation({ lat: userLat, lng: userLng, address: fallbackAddress });
+          // Keep humanName
         } finally {
           setLocating(false);
         }
@@ -283,11 +292,11 @@ export function LocationPicker({
           <span className={c('chip-text')}>
             {selectedAddress ? (
               <>
-                <strong>{selectedAddress}</strong> ({lat}, {lng})
+                <strong>{selectedAddress}</strong>
               </>
             ) : (
               <>
-                Selected Coordinates: <strong>{lat}, {lng}</strong>
+                Selected Location: <strong>{getLocationName({ lat, lng })}</strong>
               </>
             )}
           </span>

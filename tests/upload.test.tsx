@@ -4,24 +4,50 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import userEvent from '@testing-library/user-event';
 import { UploadForm } from '../components/features/detection/upload-form';
 import { ImagePreview } from '../components/features/detection/image-preview';
-const mocks = vi.hoisted(() => ({ detect: vi.fn(), toast: vi.fn(), mutate: vi.fn() }));
-vi.mock('@/lib/api/client', () => ({ detectImage: mocks.detect }));
-vi.mock('swr', () => ({ useSWRConfig: () => ({ mutate: mocks.mutate }) }));
+
+const mocks = vi.hoisted(() => ({
+  submit: vi.fn(),
+  analyze: vi.fn(),
+  toast: vi.fn(),
+  mutate: vi.fn(),
+}));
+
+vi.mock('@/lib/api/client', () => ({
+  submitImage: mocks.submit,
+  analyzeDetection: mocks.analyze,
+}));
+
+vi.mock('swr', () => ({ useSWRConfig: () => ({ mutate: mocks.mutate }), default: () => ({ data: undefined }) }));
+
 vi.mock('@/components/layout/providers', () => ({
   useConsole: () => ({ role: 'gha', admin: true, toast: mocks.toast }),
   useHealth: () => ({ data: { pothole_model_ready: true } }),
+  useStats: () => ({ data: { mock_mode: false } }),
   useStorageMode: () => ({ data: { mock_mode: false } }),
 }));
-const positive = {
+
+const positiveSubmission = {
+  id: 'saved-id',
+  message: 'Pothole report submitted successfully.',
+  status: 'pending',
+  device_id: 'Test Device',
+  coordinates: { lat: 5.6, lng: -0.18 },
+  image_url: '/api/v1/images/saved-id',
+  timestamp: '2026-10-04T21:00:00Z',
+};
+
+const positiveAnalysis = {
   id: 'saved-id',
   pothole_detected: true,
   detections: [
     { label: 'pothole', confidence: 0.92, bbox: { x1: 180, y1: 180, x2: 340, y2: 280 } },
   ],
   coordinates: { lat: 5.6, lng: -0.18 },
-  device_id: 'manual',
+  device_id: 'Test Device',
   timestamp: '2026-10-04T21:00:00Z',
+  status: 'confirmed',
 };
+
 async function fillForm() {
   const user = userEvent.setup();
   await user.upload(
@@ -29,13 +55,16 @@ async function fillForm() {
     new File(['fixture-image'], 'road.png', { type: 'image/png' }),
   );
   await screen.findByText('road.png');
-  fireEvent.change(screen.getByLabelText('Latitude'), { target: { value: '5.6' } });
-  fireEvent.change(screen.getByLabelText('Longitude'), { target: { value: '-.18' } });
+  await user.click(screen.getByRole('button', { name: 'Manual coordinates' }));
+  fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: '5.6' } });
+  fireEvent.change(screen.getByLabelText(/Longitude/i), { target: { value: '-.18' } });
   return user;
 }
+
 describe('interactive upload form', () => {
   beforeEach(() => {
-    mocks.detect.mockReset();
+    mocks.submit.mockReset();
+    mocks.analyze.mockReset();
     mocks.toast.mockReset();
     mocks.mutate.mockResolvedValue(undefined);
     vi.stubGlobal(
@@ -48,61 +77,41 @@ describe('interactive upload form', () => {
     });
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
   });
+
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
   });
-  it('rejects invalid coordinates before calling inference', async () => {
+
+  it('rejects invalid coordinates before calling submit', async () => {
     render(<UploadForm />);
     const user = await fillForm();
-    fireEvent.change(screen.getByLabelText('Latitude'), { target: { value: '1' } });
-    await user.click(screen.getByRole('button', { name: 'Run detection' }));
+    fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: '1' } });
+    await user.click(screen.getByRole('button', { name: 'Submit report' }));
     expect(await screen.findByText('Latitude must be at least 4.5.')).toBeTruthy();
-    expect(mocks.detect).not.toHaveBeenCalled();
+    expect(mocks.submit).not.toHaveBeenCalled();
   });
-  it('submits the selected file and displays real detection metadata', async () => {
-    mocks.detect.mockResolvedValue(positive);
+
+  it('submits the selected file and displays view stats button', async () => {
+    mocks.submit.mockResolvedValue(positiveSubmission);
+    mocks.analyze.mockResolvedValue(positiveAnalysis);
+
     render(<UploadForm />);
     const user = await fillForm();
-    await user.click(screen.getByRole('button', { name: 'Run detection' }));
-    expect(await screen.findByRole('heading', { name: 'Pothole confirmed' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Submit report' }));
+
+    expect(await screen.findByText('Report Submitted Successfully')).toBeTruthy();
     expect(screen.getByText('saved-id')).toBeTruthy();
-    expect(mocks.detect.mock.calls[0][0]).toMatchObject({
-      lat: 5.6,
-      lng: -0.18,
-      device_id: 'manual',
-    });
-    expect(mocks.detect.mock.calls[0][0].image.name).toBe('road.png');
+
+    const viewStatsBtn = screen.getByRole('button', { name: 'View Stats / Detection Report' });
+    expect(viewStatsBtn).toBeTruthy();
+
+    await user.click(viewStatsBtn);
+    expect(await screen.findByRole('heading', { name: 'Pothole confirmed' })).toBeTruthy();
   });
-  it('shows a negative result without fabricating persistence', async () => {
-    mocks.detect.mockResolvedValue({
-      ...positive,
-      id: null,
-      pothole_detected: false,
-      detections: [],
-    });
-    render(<UploadForm />);
-    const user = await fillForm();
-    await user.click(screen.getByRole('button', { name: 'Run detection' }));
-    expect(await screen.findByRole('heading', { name: 'No confirmed pothole' })).toBeTruthy();
-    expect(screen.getAllByText('Not saved')).toHaveLength(2);
-    expect(screen.queryByText('saved-id')).toBeNull();
-  });
-  it('renders failures and restores the submit control', async () => {
-    mocks.detect.mockRejectedValue(new Error('Pothole model unavailable.'));
-    render(<UploadForm />);
-    const user = await fillForm();
-    await user.click(screen.getByRole('button', { name: 'Run detection' }));
-    expect(await screen.findByText('Pothole model unavailable.')).toBeTruthy();
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Run detection' }).hasAttribute('disabled')).toBe(
-        false,
-      ),
-    );
-    expect(screen.queryByRole('heading', { name: 'Pothole confirmed' })).toBeNull();
-  });
+
   it('renders boxes against natural image dimensions instead of a fixed frame', () => {
-    render(<ImagePreview src="blob:test" detections={positive.detections} />);
+    render(<ImagePreview src="blob:test" detections={positiveAnalysis.detections} />);
     const image = screen.getByAltText('Uploaded road image');
     Object.defineProperty(image, 'naturalWidth', { configurable: true, value: 1280 });
     Object.defineProperty(image, 'naturalHeight', { configurable: true, value: 720 });

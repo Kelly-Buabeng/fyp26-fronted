@@ -18,6 +18,7 @@ import {
 import { ExportActions } from '../reports/export-actions';
 import { errorMessage } from '../../../lib/api/errors';
 import { dateTime } from '../../../lib/format';
+import { getLocationName } from '../../../lib/geo';
 import { c } from '../../../lib/styles';
 export function AdminGate() {
   const { openLogin } = useConsole();
@@ -185,8 +186,8 @@ export function DetectionsTable() {
                             <td className={c('mono')}>{dateTime(r.created_at)}</td>
                             <td className={c('mono')}>{r.device_id}</td>
                             <td>{r.region}</td>
-                            <td className={c('mono')}>
-                              {r.lat.toFixed(4)}, {r.lng.toFixed(4)}
+                            <td>
+                              {getLocationName({ lat: r.lat, lng: r.lng })}
                             </td>
                             <td className={c('num mono')}>{r.confidence.toFixed(2)}</td>
                             <td>

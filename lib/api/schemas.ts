@@ -19,9 +19,40 @@ export const detectionResponseSchema = z.object({
   coordinates: z.object({ lat: z.number(), lng: z.number() }),
   device_id: z.string(),
   timestamp: z.string(),
+  image_url: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+});
+export const submitResponseSchema = z.object({
+  id: z.string(),
+  message: z.string(),
+  status: z.string(),
+  device_id: z.string(),
+  coordinates: z.object({ lat: z.number(), lng: z.number() }),
+  image_url: z.string(),
+  timestamp: z.string(),
+});
+export const detectionRecordSchema = z.object({
+  id: z.string(),
+  device_id: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  confidence: z.number(),
+  detections: z.array(detectionItemSchema).default([]),
+  status: z.string().default('pending'),
+  image_url: z.string().optional(),
+  created_at: z.string(),
+});
+export const statusUpdateSchema = z.object({
+  status: z.enum(['pending', 'confirmed', 'declined', 'fixed']),
 });
 export const heatmapSchema = z.array(
-  z.object({ lat: z.number(), lng: z.number(), intensity: confidence }),
+  z.object({
+    id: z.string().optional(),
+    lat: z.number(),
+    lng: z.number(),
+    intensity: confidence,
+    image_url: z.string().optional(),
+  }),
 );
 export const statsSchema = z.object({
   total_detections: z.number().int().nonnegative(),

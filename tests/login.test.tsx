@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LoginForm } from '@/components/features/auth/login-form';
+import { LoginForm } from '../components/features/auth/login-form';
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   refresh: vi.fn(),
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
 }));
-vi.mock('@/components/layout/providers', () => ({
+vi.mock('../components/layout/providers', () => ({
   useConsole: () => ({ toast: mocks.toast }),
   useAuthoritySession: () => ({ data: { enabled: true }, mutate: mocks.mutate }),
 }));
