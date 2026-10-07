@@ -64,7 +64,7 @@ export function Notice({ label, children }: { label: string; children: ReactNode
 }
 export function MockNotice() {
   return (
-    <Notice label="Sample data">
+    <Notice label="Data">
       The backend is in live mode.
     </Notice>
   );

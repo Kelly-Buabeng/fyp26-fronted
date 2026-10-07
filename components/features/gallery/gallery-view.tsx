@@ -139,7 +139,6 @@ export function GalleryView() {
                     </div>
 
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-color, #1f2937)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>📍</span>
                       <span>{locationName}</span>
                     </div>
                   </div>
