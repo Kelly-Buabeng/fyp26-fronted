@@ -7,10 +7,8 @@ const pages = [
   ['/', 'Live map'],
   ['/dashboard', 'Dashboard'],
   ['/report', 'Regional report'],
-  ['/detections', 'Detections'],
   ['/gallery', 'Gallery'],
   ['/detect', 'Run detection'],
-  ['/devices', 'Devices'],
 ] as const;
 export function Header() {
   const path = usePathname();
