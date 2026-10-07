@@ -10,7 +10,7 @@ Backend source reviewed: `Kelly-Buabeng/FYP-26-POTHOLE-DETECTION`, `main`, commi
 the verified endpoint contracts and `docs/IMPLEMENTATION.md` for implementation
 decisions and remaining backend requirements.
 
-## Run locally
+## Run locally.
 
 Use Node.js 20.9 or newer (Node.js 24 LTS recommended).
 
