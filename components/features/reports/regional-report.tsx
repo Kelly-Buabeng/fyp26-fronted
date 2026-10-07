@@ -13,7 +13,6 @@ import {
   Loading,
   ErrorState,
 } from '../../ui/primitives';
-import { ExportActions } from './export-actions';
 import { c } from '../../../lib/styles';
 import { severityColors, dateTime } from '../../../lib/format';
 import { errorMessage } from '../../../lib/api/errors';
@@ -102,7 +101,6 @@ export function RegionalReport() {
           eyebrow="Handoff"
           title="Regional severity report"
           description="Detections grouped by nearest regional capital and confidence band for Roads and Highway Authority review."
-          actions={<ExportActions options={{ min_confidence: minimum, limit }} />}
         />
         <div className={c('spaced')}>
           <Notice label="Method">
