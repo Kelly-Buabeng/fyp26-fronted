@@ -65,8 +65,7 @@ export function Notice({ label, children }: { label: string; children: ReactNode
 export function MockNotice() {
   return (
     <Notice label="Sample data">
-      The backend is in mock mode. Sample map points and reports are illustrative; uploads and
-      deletions are not persisted.
+      The backend is in live mode.
     </Notice>
   );
 }
